@@ -20,7 +20,7 @@ if(APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 endif(APPLE)
 
-set(CMAKE_CXX_FLAGS "-g ${CMAKE_CXX_FLAGS} -L ${MRUBY_ROOT} -Imruby/include -Imruby ")
+set(CMAKE_CXX_FLAGS "-g ${CMAKE_CXX_FLAGS} -Imruby/include -Imruby ")
 
 
 include_directories(opentoonz_mruby mruby/include)

@@ -1,4 +1,4 @@
-#include <stdio.h>
+
 
 #include <toonz_plugin.h>
 #include <toonz_hostif.h>
@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+#include <cstdio>
 
 #include <mruby/value.h>
 #include <mruby.h>
@@ -32,11 +33,8 @@ struct RClass* mrb_define_class_under(mrb_state*, struct RClass*, const char*, s
 */
 
 
-#ifdef __cplusplus
-}
-#endif
 
-toonz::host_interface_t *ifactory_ = NULL;
+toonz::host_interface_t *ifactory = NULL;
 mrb_state *default_state = NULL;
 
 void mrb_toonz_init(mrb_state *mrb);
@@ -44,7 +42,9 @@ void mrb_toonz_init(mrb_state *mrb);
 int toonz_mruby_init(toonz::host_interface_t *hostif)
 {
     mrb_state *mrb = mrb_open();
-    ifactory_ = hostif;
+    ifactory = hostif;
+    default_state = mrb;
+    mrb_toonz_init(mrb);
     return TOONZ_OK;
 }
 
@@ -416,7 +416,7 @@ void mrb_toonz_init(mrb_state *mrb)
     core_params     = mrb_define_class_under(mrb,   core,   "Param",        mrb->object_class);
     core_plugin     = mrb_define_class_under(mrb,   core,   "Plugin",       mrb->object_class);
 
-    mrb_define_class_method(mrb,    toonz,      "relase_interf",            mrb_toonz_release_interf,                       MRB_ARGS_REQ(1));
+    mrb_define_class_method(mrb,    toonz,      "release_interf",           mrb_toonz_release_interf,                       MRB_ARGS_REQ(1));
     mrb_define_class_method(mrb,    toonz,      "grub_interf",              mrb_toonz_grab_interf,                          MRB_ARGS_REQ(1));
 
     mrb_define_method(mrb,      rect,           "initialize",               mrb_toonz_utils_rect_rect_init,                 MRB_ARGS_OPT(4));
@@ -446,3 +446,7 @@ void mrb_toonz_init(mrb_state *mrb)
 
     mrb_define_method(mrb,      point,          "initialize",               mrb_toonz_utils_affine_point_init,              MRB_ARGS_OPT(2));
 }
+
+#ifdef __cplusplus
+}
+#endif
