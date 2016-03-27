@@ -105,13 +105,16 @@ mrb_value mrb_toonz_utils_affine_init(mrb_state *mrb, mrb_value self)
         mrb_raise(mrb, E_RUNTIME_ERROR, "fail to new ToonzAffine");
     }
     mrb_data_init(self, affine, &mrb_toonz_utils_affine_data);
+
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@err"), mrb_float_value(mrb, 10e-9));
     return self;
 }
 
 mrb_value mrb_toonz_utils_affine_det(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
-    return mrb_float_value(mrb, (mrb_float)affine->det());
+    auto retv = affine->det();
+    return self;
 
 }
 mrb_value mrb_toonz_utils_affine_inv(mrb_state *mrb, mrb_value self)
@@ -152,13 +155,6 @@ mrb_value mrb_toonz_utils_affine_plus(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_utils_affine_subtract(mrb_state *mrb, mrb_value self)
-{
-    auto *affine =  (ToonzAffine*)DATA_PTR(self);
-    mrb_value v;
-    mrb_get_args(mrb,"o",&v);
-    return self;
-}
 
 mrb_value mrb_toonz_utils_affine_multi(mrb_state *mrb, mrb_value self)
 {
@@ -166,30 +162,28 @@ mrb_value mrb_toonz_utils_affine_multi(mrb_state *mrb, mrb_value self)
 
     mrb_value v;
     mrb_get_args(mrb,"o",&v);
+    auto *affine2 = (ToonzAffine*)DATA_PTR(v);
+    *affine = *affine * *affine2;
     return self;
 }
 
-mrb_value mrb_toonz_utils_affine_div(mrb_state *mrb, mrb_value self)
-{
-    auto *affine =  (ToonzAffine*)DATA_PTR(self);
-    mrb_value v;
-    mrb_get_args(mrb,"o",&v);
-    return self;
-}
 
 mrb_value mrb_toonz_utils_affine_mutil_and_assign(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
     mrb_get_args(mrb, "o", &v);
+    auto *affine2 = (ToonzAffine*)DATA_PTR(self);
+    *affine *= *affine2;
     return self;
 }
 
-mrb_value mrb_toonz_utils_affine_assing(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_assgin(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
     mrb_get_args(mrb, "o", &v);
+    DATA_PTR(self) = DATA_PTR(v);
     return self;
 }
 
@@ -198,7 +192,12 @@ mrb_value mrb_toonz_utils_affine_eq(mrb_state *mrb, mrb_value self)
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
     mrb_get_args(mrb, "o", &v);
-    return self;
+    auto *affine2 = (ToonzAffine*)DATA_PTR(v);
+    if(*affine == *affine2) {
+        return mrb_true_value();
+    }else {
+        return mrb_false_value();
+    }
 }
 
 mrb_value mrb_toonz_utils_affine_not_eq(mrb_state *mrb, mrb_value self)
@@ -206,15 +205,43 @@ mrb_value mrb_toonz_utils_affine_not_eq(mrb_state *mrb, mrb_value self)
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
     mrb_get_args(mrb, "o", &v);
-    return self;
+    auto *affine2 = (ToonzAffine*)DATA_PTR(v);
+    if(*affine != *affine2) {
+        return mrb_true_value();
+    }else {
+        return mrb_false_value();
+    }
+
 }
 
 mrb_value mrb_toonz_utils_affine_place(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
-    mrb_value v;
-    mrb_get_args(mrb, "o", &v);
+    mrb_float v1, v2, w1, w2;
+    mrb_get_args(mrb, "ffff", &v1, &v2, &w1, &w2);
+    auto ret = affine->place(v1,v2,w1,w2);
     return self;
+}
+
+mrb_value mrb_toonz_utils_affine_err_setter(mrb_state *mrb, mrb_value self)
+{
+    auto *affine = (ToonzAffine*)DATA_PTR(self);
+    mrb_float err;
+    mrb_get_args(mrb, "f", &err);
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@err"), mrb_float_value(mrb,err));
+    return mrb_float_value(mrb, err);
+}
+
+mrb_value mrb_toonz_utils_affine_err_getter(mrb_state *mrb, mrb_value self)
+{
+    auto *affine = (ToonzAffine*)DATA_PTR(self);
+    mrb_value ret = mrb_iv_get(mrb, self, mrb_intern_lit(mrb,"@err"));
+    if(mrb_float_p(ret)) {
+        return mrb_float_value(mrb, mrb_float(ret));
+    }else{
+        return mrb_float_value(mrb, 0);
+    }
+
 }
 
 void mrb_toonz_utils_affine_point_delete(mrb_state *mrb, void *p)
