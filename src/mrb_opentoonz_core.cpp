@@ -19,6 +19,7 @@ extern "C" {
 #include <mruby/data.h>
 #include <mruby/compile.h>
 #include <mruby/object.h>
+#include <mruby/numeric.h>
 #include <mruby/class.h>
 #include <mruby/string.h>
 #include <mruby/variable.h>
@@ -63,13 +64,25 @@ static const mrb_data_type mrb_toonz_affine_data = {
 mrb_value mrb_toonz_affine_init(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
+    struct RClass *class_toonz, *class_affine;
+    class_toonz = mrb_class_get(mrb, "Toonz");
+    class_affine = mrb_class_get_under(mrb, class_toonz, "Affine");
+
     mrb_value u,v,w,x,y,z;
     if(affine) {
         delete(affine);
     }
     mrb_data_init(self, NULL, &mrb_toonz_affine_data);
     mrb_get_args(mrb, "|oooooo", &u, &v, &w, &x, &y, &z);
-    affine = new(ToonzAffine);
+    if(mrb_nil_p(u)){
+        affine = new ToonzAffine();
+    }else if( true == mrb_obj_is_kind_of(mrb, u, class_affine)) {
+        affine = new ToonzAffine(*(const ToonzAffine*)DATA_PTR(u));
+    }else{
+    affine = new ToonzAffine();
+
+    }
+
     if(affine == NULL) {
         mrb_raise(mrb, E_RUNTIME_ERROR, "fail to new ToonzAffine");
     }
@@ -197,16 +210,21 @@ static const mrb_data_type mrb_toonz_affine_point_data_type = {
 
 mrb_value mrb_toonz_affine_point_init(mrb_state *mrb, mrb_value self)
 {
-    auto *point = (ToonzPoint*)DATA_PTR(self);
-    mrb_value x, y, z;
+   auto *point = (ToonzPoint*)DATA_PTR(self);
+   mrb_value x ,y ;
     if(point) {
         delete(point);
     }
 
-    mrb_value v = mrb_float_value(mrb, 0) , w = mrb_float_value(mrb,0);
-    mrb_get_args(mrb, "|ooo",&x, &y, &z);
+    x = mrb_float_value(mrb, 0) , y = mrb_float_value(mrb,0);
+    mrb_get_args(mrb, "|oo",&x, &y);
+    if( true == mrb_float_p(x) && true == mrb_float_p(x))
+    {
+        point = new ToonzPoint(mrb_to_flo(mrb,x), mrb_to_flo(mrb,y));
+    }else {
+        point = new ToonzPoint;
+    }
     mrb_data_init(self, point, &mrb_toonz_affine_point_data_type);
-
     return self;
 }
 
@@ -236,5 +254,5 @@ void mrb_toonz_init(mrb_state *mrb)
 
     mrb_define_method(mrb,      affine,         "initialize",   mrb_toonz_affine_init,      MRB_ARGS_OPT(6));
 
-    mrb_define_method(mrb,      point,          "initialize",   mrb_toonz_affine_point_init,    MRB_ARGS_OPT(3));
+    mrb_define_method(mrb,      point,          "initialize",   mrb_toonz_affine_point_init,    MRB_ARGS_OPT(2));
 }
