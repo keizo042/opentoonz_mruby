@@ -37,17 +37,21 @@ struct RClass* mrb_define_class_under(mrb_state*, struct RClass*, const char*, s
 #endif
 
 toonz::host_interface_t *ifactory_ = NULL;
+mrb_state *default_state = NULL;
 
 void mrb_toonz_init(mrb_state *mrb);
 
 int toonz_mruby_init(toonz::host_interface_t *hostif)
 {
+    mrb_state *mrb = mrb_open();
     ifactory_ = hostif;
     return TOONZ_OK;
 }
 
 void toonz_mruby_finish()
 {
+    mrb_state *mrb;
+    mrb_close(mrb);
     return;
 }
 
@@ -57,11 +61,25 @@ void affine_delete(mrb_state *mrb, void *p)
     delete((ToonzAffine*)p);
 }
 
-static const mrb_data_type mrb_toonz_affine_data = {
-    "mrb_toonz_affine_data", affine_delete
+mrb_value mrb_toonz_release_interf(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb, "o", &v);
+    return mrb_nil_value();
+}
+
+mrb_value mrb_toonz_grab_interf(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb, "o", &v);
+    return mrb_nil_value();
+}
+
+static const mrb_data_type mrb_toonz_utils_affine_data = {
+    "mrb_toonz_utils_affine_data", affine_delete
 };
 
-mrb_value mrb_toonz_affine_init(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_init(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     struct RClass *class_toonz, *class_affine;
@@ -72,7 +90,7 @@ mrb_value mrb_toonz_affine_init(mrb_state *mrb, mrb_value self)
     if(affine) {
         delete(affine);
     }
-    mrb_data_init(self, NULL, &mrb_toonz_affine_data);
+    mrb_data_init(self, NULL, &mrb_toonz_utils_affine_data);
     mrb_get_args(mrb, "|oooooo", &u, &v, &w, &x, &y, &z);
     if(mrb_nil_p(u)){
         affine = new ToonzAffine();
@@ -86,24 +104,24 @@ mrb_value mrb_toonz_affine_init(mrb_state *mrb, mrb_value self)
     if(affine == NULL) {
         mrb_raise(mrb, E_RUNTIME_ERROR, "fail to new ToonzAffine");
     }
-    mrb_data_init(self, affine, &mrb_toonz_affine_data);
+    mrb_data_init(self, affine, &mrb_toonz_utils_affine_data);
     return self;
 }
 
-mrb_value mrb_toonz_affine_det(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_det(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     return mrb_float_value(mrb, (mrb_float)affine->det());
 
 }
-mrb_value mrb_toonz_affine_inv(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_inv(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     auto retv = affine->inv();
     return self;
 }
 
-mrb_value mrb_toonz_affine_isIdentify(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_isIdentify(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     mrb_float v;
@@ -118,7 +136,7 @@ mrb_value mrb_toonz_affine_isIdentify(mrb_state *mrb, mrb_value self)
     return mrb_false_value();
 }
 
-mrb_value  mrb_toonz_affine_isIsotropic(mrb_state *mrb, mrb_value self)
+mrb_value  mrb_toonz_utils_affine_isIsotropic(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     mrb_float v;
@@ -126,7 +144,7 @@ mrb_value  mrb_toonz_affine_isIsotropic(mrb_state *mrb, mrb_value self)
     return mrb_float_value(mrb, (mrb_float)affine->isIsotropic((double)v));
 }
 
-mrb_value mrb_toonz_affine_plus(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_plus(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -134,7 +152,7 @@ mrb_value mrb_toonz_affine_plus(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_subtract(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_subtract(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -142,7 +160,7 @@ mrb_value mrb_toonz_affine_subtract(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_multi(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_multi(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
 
@@ -151,7 +169,7 @@ mrb_value mrb_toonz_affine_multi(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_div(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_div(mrb_state *mrb, mrb_value self)
 {
     auto *affine =  (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -159,7 +177,7 @@ mrb_value mrb_toonz_affine_div(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_mutil_and_assign(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_mutil_and_assign(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -167,7 +185,7 @@ mrb_value mrb_toonz_affine_mutil_and_assign(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_assing(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_assing(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -175,7 +193,7 @@ mrb_value mrb_toonz_affine_assing(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_eq(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_eq(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -183,7 +201,7 @@ mrb_value mrb_toonz_affine_eq(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_not_eq(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_not_eq(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -191,7 +209,7 @@ mrb_value mrb_toonz_affine_not_eq(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-mrb_value mrb_toonz_affine_place(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_place(mrb_state *mrb, mrb_value self)
 {
     auto *affine = (ToonzAffine*)DATA_PTR(self);
     mrb_value v;
@@ -199,16 +217,16 @@ mrb_value mrb_toonz_affine_place(mrb_state *mrb, mrb_value self)
     return self;
 }
 
-void mrb_toonz_affine_point_delete(mrb_state *mrb, void *p)
+void mrb_toonz_utils_affine_point_delete(mrb_state *mrb, void *p)
 {
     delete((ToonzPoint*)p);
 }
 
-static const mrb_data_type mrb_toonz_affine_point_data_type = {
-    "mrb_toonz_affine_point_data_type", mrb_toonz_affine_point_delete
+static const mrb_data_type mrb_toonz_utils_affine_point_data_type = {
+    "mrb_toonz_utils_affine_point_data_type", mrb_toonz_utils_affine_point_delete
 };
 
-mrb_value mrb_toonz_affine_point_init(mrb_state *mrb, mrb_value self)
+mrb_value mrb_toonz_utils_affine_point_init(mrb_state *mrb, mrb_value self)
 {
    auto *point = (ToonzPoint*)DATA_PTR(self);
    mrb_value x ,y ;
@@ -224,7 +242,94 @@ mrb_value mrb_toonz_affine_point_init(mrb_state *mrb, mrb_value self)
     }else {
         point = new ToonzPoint;
     }
-    mrb_data_init(self, point, &mrb_toonz_affine_point_data_type);
+    mrb_data_init(self, point, &mrb_toonz_utils_affine_point_data_type);
+    return self;
+}
+
+void mrb_toonz_utils_rect_rect_delete(mrb_state *mrb, void *p)
+{
+    delete( (ToonzRect*)p );
+    return;
+}
+
+mrb_data_type mrb_toonz_utils_rect_type = {
+    "mrb_toonz_utils_rect_rect_data_type", mrb_toonz_utils_rect_rect_delete
+};
+
+mrb_value mrb_toonz_utils_rect_rect_init(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_equals(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_add(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_subtract(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_multi(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_add_and_assign(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_multi_and_assign(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_isEmpty(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_isContained(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_isOverlapped(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
+    return self;
+}
+
+mrb_value mrb_toonz_utils_rect_rect_enlarge(mrb_state *mrb, mrb_value self)
+{
+    mrb_value v;
+    mrb_get_args(mrb,"o",&v);
     return self;
 }
 
@@ -251,8 +356,10 @@ void mrb_toonz_init(mrb_state *mrb)
     core_params     = mrb_define_class_under(mrb,   core,   "Param",        mrb->object_class);
     core_plugin     = mrb_define_class_under(mrb,   core,   "Plugin",       mrb->object_class);
 
+    mrb_define_class_method(mrb,    toonz,      "relase_interf",  mrb_toonz_release_interf,   MRB_ARGS_REQ(1));
+    mrb_define_class_method(mrb,    toonz,      "grub_interf",  mrb_toonz_grab_interf,   MRB_ARGS_REQ(1));
 
-    mrb_define_method(mrb,      affine,         "initialize",   mrb_toonz_affine_init,      MRB_ARGS_OPT(6));
+    mrb_define_method(mrb,      affine,         "initialize",   mrb_toonz_utils_affine_init,      MRB_ARGS_OPT(6));
 
-    mrb_define_method(mrb,      point,          "initialize",   mrb_toonz_affine_point_init,    MRB_ARGS_OPT(2));
+    mrb_define_method(mrb,      point,          "initialize",   mrb_toonz_utils_affine_point_init,    MRB_ARGS_OPT(2));
 }
