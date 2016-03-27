@@ -440,7 +440,7 @@ void mrb_toonz_init(mrb_state *mrb)
     mrb_define_method(mrb,      affine,         "!=",                       mrb_toonz_utils_affine_not_eq,                  MRB_ARGS_REQ(1));
     mrb_define_method(mrb,      affine,         "inv",                      mrb_toonz_utils_affine_inv,                     MRB_ARGS_NONE());
     mrb_define_method(mrb,      affine,         "det",                      mrb_toonz_utils_affine_det,                     MRB_ARGS_NONE());
-    mrb_define_method(mrb,      affine,         "isIdentity",               mrb_toonz_utils_affine_isIdentify,              MRB_AGRS_NONE());
+    mrb_define_method(mrb,      affine,         "isIdentity",               mrb_toonz_utils_affine_isIdentify,              MRB_ARGS_NONE());
     mrb_define_method(mrb,      affine,         "isIsotropic",              mrb_toonz_utils_affine_isIsotropic,             MRB_ARGS_NONE());
             
 
