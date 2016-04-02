@@ -1,43 +1,37 @@
+#ifdef _MSC_VER
+#define RESTRICT
+#else
+#define RESTRICT __restrict 
+#endif
 
+#include <utils/rect.hpp>
+#include <utils/param_traits.hpp>
+#include <utils/affine.hpp>
+//#include <utils/interf_holder.hpp>
 
 #include <toonz_plugin.h>
 #include <toonz_hostif.h>
-
-#include <utils/rect.hpp>
-#include <utils/interf_holder.hpp>
-#include <utils/param_traits.hpp>
-#include <utils/affine.hpp>
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <cstdio>
 
-#include <mruby/value.h>
+
+
 #include <mruby.h>
-#include <mruby/data.h>
 #include <mruby/compile.h>
-#include <mruby/object.h>
+#include <mruby/data.h>
 #include <mruby/numeric.h>
-#include <mruby/class.h>
-#include <mruby/string.h>
 #include <mruby/variable.h>
-#include <mruby/proc.h>
-    /*
-mrb_int mrb_get_args(mrb_state*, mrb_args_format , ...);
-struct RClass* mrb_class_get(mrb_state*, const char*);
-struct RClass* mrb_define_class(mrb_state*, const char*, struct RClass*);
-struct RClass* mrb_define_class_under(mrb_state*, struct RClass*, const char*, struct RClass*);
-*/
 
-
-
+extern "C" {
 toonz::host_interface_t *ifactory = NULL;
 mrb_state *default_state = NULL;
+void mrb_toonz_init(mrb_state *);
+}
 
-void mrb_toonz_init(mrb_state *mrb);
+
+
+
+
+
 
 int toonz_mruby_init(toonz::host_interface_t *hostif)
 {
@@ -56,7 +50,7 @@ void toonz_mruby_finish()
 }
 
 
-
+/*
 mrb_value mrb_toonz_release_interf(mrb_state *mrb, mrb_value self)
 {
     mrb_value v;
@@ -70,6 +64,7 @@ mrb_value mrb_toonz_grab_interf(mrb_state *mrb, mrb_value self)
     mrb_get_args(mrb, "o", &v);
     return mrb_nil_value();
 }
+*/
 
 void mrb_toonz_utils_affine_delete(mrb_state *mrb, void *p)
 {
@@ -416,8 +411,8 @@ void mrb_toonz_init(mrb_state *mrb)
     core_params     = mrb_define_class_under(mrb,   core,   "Param",        mrb->object_class);
     core_plugin     = mrb_define_class_under(mrb,   core,   "Plugin",       mrb->object_class);
 
-    mrb_define_class_method(mrb,    toonz,      "release_interf",           mrb_toonz_release_interf,                       MRB_ARGS_REQ(1));
-    mrb_define_class_method(mrb,    toonz,      "grub_interf",              mrb_toonz_grab_interf,                          MRB_ARGS_REQ(1));
+//    mrb_define_class_method(mrb,    toonz,      "release_interf",           mrb_toonz_release_interf,                       MRB_ARGS_REQ(1));
+//    mrb_define_class_method(mrb,    toonz,      "grub_interf",              mrb_toonz_grab_interf,                          MRB_ARGS_REQ(1));
 
     mrb_define_method(mrb,      rect,           "initialize",               mrb_toonz_utils_rect_rect_init,                 MRB_ARGS_OPT(4));
     mrb_define_method(mrb,      rect,           "+",                        mrb_toonz_utils_rect_rect_add,                  MRB_ARGS_REQ(1));
@@ -447,6 +442,3 @@ void mrb_toonz_init(mrb_state *mrb)
     mrb_define_method(mrb,      point,          "initialize",               mrb_toonz_utils_affine_point_init,              MRB_ARGS_OPT(2));
 }
 
-#ifdef __cplusplus
-}
-#endif
